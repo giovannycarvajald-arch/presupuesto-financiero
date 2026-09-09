@@ -37,6 +37,7 @@ footer{text-align:center;color:#98a2b3;font-size:12px;padding:12px 0}
 @media(max-width:390px){h1{font-size:28px}.card{padding:17px}.summaryGrid{grid-template-columns:1fr}.actions button{width:100%}}
  
 /* v2: app-style dashboard */
+.statusChip{display:inline-block;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap}.chipGood{background:#dcfce7;color:#166534}.chipWarn{background:#fef3c7;color:#92400e}.chipOver{background:#fee2e2;color:#991b1b}
 .hero{background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;border:0}
 .hero .subtitle{color:#cbd5e1}
 .hero .eyebrow{color:#93c5fd}
@@ -47,9 +48,11 @@ footer{text-align:center;color:#98a2b3;font-size:12px;padding:12px 0}
 .kpi .mini{font-size:12px;color:var(--muted);margin-top:5px}
 .donutWrap{display:flex;align-items:center;justify-content:center;padding:8px 0 16px}
 .donut{width:190px;height:190px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent) 0 20%,#60a5fa 20% 30%,#34d399 30% 40%,#e5e7eb 40% 100%);position:relative}
+.realDonut{background:conic-gradient(#f87171 0 25%,#f59e0b 25% 50%,#60a5fa 50% 65%,#34d399 65% 80%,#d1d5db 80% 100%)}
 .donut:after{content:"";width:112px;height:112px;background:#fff;border-radius:50%;position:absolute}
 .donutCenter{position:relative;z-index:1;text-align:center}.donutCenter b{font-size:24px;display:block}.donutCenter span{font-size:11px;color:var(--muted);font-weight:700}
 .legend{display:grid;grid-template-columns:1fr 1fr;gap:8px}.legend div{font-size:12px;font-weight:700;padding:9px;border-radius:12px;background:#f8fafc}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:var(--accent)}
+.chartNote{font-size:12px;color:var(--muted);text-align:center;line-height:1.45;margin:-3px 4px 12px}
 .pbar{height:12px;background:#e8ecf2;border-radius:99px;overflow:hidden}.pbar>i{display:block;height:100%;border-radius:99px;background:var(--accent)}
 .swipeHint{font-size:12px;color:var(--muted);text-align:center;margin-top:8px}
 .modal{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:20;display:none;align-items:flex-end}.modal.show{display:flex}.sheet{width:100%;max-width:620px;margin:auto;background:#fff;border-radius:24px 24px 0 0;padding:20px calc(20px + env(safe-area-inset-right)) calc(25px + env(safe-area-inset-bottom))}.sheet h3{margin-top:0}
@@ -64,7 +67,7 @@ select:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(37,99,235,.10)
 <header>
   <div class="eyebrow">Tu dinero · Tu decisión · Tu futuro</div>
   <h1>Presupuesto Financiero Personal</h1>
-  <div class="subtitle">Registra tus ingresos, gastos y deudas paso a paso. Al final tendrás un dashboard con tus cifras reales y una distribución sugerida.</div>
+  <div class="subtitle">Registra tus ingresos, gastos, deudas, inversiones y diezmos/donaciones paso a paso. Al final tendrás un dashboard con tus cifras reales y una distribución sugerida.</div>
 </header>
 <div class="progress"><div id="progress"></div></div>
 
@@ -79,19 +82,21 @@ select:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(37,99,235,.10)
   <div style="margin-top:10px">
     <select id="monthSelect" style="width:100%;height:48px;border:1px solid #d8dee8;border-radius:14px;background:#fff;padding:0 12px;font-size:16px;color:var(--ink);-webkit-appearance:auto"></select>
   </div>
-  <div class="swipeHint">Cada mes tiene sus propios ingresos, gastos y deudas y queda guardado en este iPhone.</div>
+  <div class="swipeHint">Cada mes tiene sus propios ingresos, gastos, deudas, inversiones y diezmos/donaciones y queda guardado en este iPhone.</div>
 </div>
 
 <div id="tabs" class="tabbar" aria-label="Secciones">
  <button type="button" id="tabIncome" data-tab="income">Ingresos</button>
  <button type="button" id="tabExpense" data-tab="expense">Gastos</button>
  <button type="button" id="tabDebt" data-tab="debt">Deudas</button>
+ <button type="button" id="tabInvestment" data-tab="investment">Inversiones</button>
+ <button type="button" id="tabDonation" data-tab="donation">Diezmo / Donación</button>
  <button type="button" id="tabDashboard" data-tab="dashboard">Dashboard</button>
 </div>
 <section id="welcome" class="card" style="text-align:center">
   <div style="font-size:48px;margin-bottom:8px">💰</div>
   <h2>Comencemos tu presupuesto</h2>
-  <p class="hint">Primero vamos a registrar tus ingresos. Después pasaremos a gastos, deudas y finalmente al dashboard.</p>
+  <p class="hint">Primero vamos a registrar tus ingresos. Después pasaremos a gastos, deudas, inversiones, diezmo/donación y finalmente al dashboard.</p>
   <button type="button" class="primary" id="startBtn" style="width:100%">Comenzar con mis ingresos</button>
   <div class="note" style="text-align:left;margin-top:14px">No necesitas llenar todo de una vez. Los datos se guardan automáticamente en este navegador.</div>
 </section>
@@ -100,6 +105,8 @@ select:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(37,99,235,.10)
   <div id="stepIncome"></div>
   <div id="stepExpense" class="hidden"></div>
   <div id="stepDebt" class="hidden"></div>
+  <div id="stepInvestment" class="hidden"></div>
+  <div id="stepDonation" class="hidden"></div>
   <div id="stepDashboard" class="hidden"></div>
 </section>
 
@@ -117,7 +124,7 @@ select:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(37,99,235,.10)
     </div>
   </div>
 </div>
-<footer>Versión 2.4 · Los datos se guardan automáticamente en este iPhone mediante almacenamiento local. Puedes añadirla a la pantalla de inicio desde Safari → Compartir → “Añadir a pantalla de inicio”.</footer>
+<footer>Versión 2.5 · Los datos se guardan automáticamente en este iPhone mediante almacenamiento local. Puedes añadirla a la pantalla de inicio desde Safari → Compartir → “Añadir a pantalla de inicio”.</footer>
 </div>
 
 <script>
@@ -127,7 +134,8 @@ function monthKey(d=new Date()){
   const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0");
   return `${y}-${m}`;
 }
-function blankMonth(){return {income:[],expenses:[],debts:[]};}
+function blankMonth(){return {income:[],expenses:[],debts:[],investment:[],donation:[]};}
+function normalizeMonth(m){m=m||{};return {income:Array.isArray(m.income)?m.income:[],expenses:Array.isArray(m.expenses)?m.expenses:[],debts:Array.isArray(m.debts)?m.debts:[],investment:Array.isArray(m.investment)?m.investment:[],donation:Array.isArray(m.donation)?m.donation:[]};}
 function monthLabel(key){
   const [y,m]=key.split("-").map(Number);
   return new Intl.DateTimeFormat("es-CO",{month:"long",year:"numeric"}).format(new Date(y,m-1,1));
@@ -139,12 +147,15 @@ if(!store || !store.months){
   store={months:{[k]:old&&old.income?old:blankMonth()},active:k};
   localStorage.setItem(KEY,JSON.stringify(store));
 }
+Object.keys(store.months).forEach(k=>{store.months[k]=normalizeMonth(store.months[k]);});
 let activeMonth=store.active || monthKey();
 if(!store.months[activeMonth]) store.months[activeMonth]=blankMonth();
 let data=store.months[activeMonth];
+persist();
 let phase="income";
 function persist(){
-  store.months[activeMonth]=data;
+  store.months[activeMonth]=normalizeMonth(data);
+  data=store.months[activeMonth];
   store.active=activeMonth;
   localStorage.setItem(KEY,JSON.stringify(store));
 }
@@ -153,15 +164,17 @@ const sum=a=>a.reduce((t,x)=>t+(Number(x.amount)||0),0);
 function save(){persist();}
 function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
 function setProgress(){
- document.getElementById("progress").style.width=({income:"25%",expense:"50%",debt:"75%",dashboard:"100%"})[phase];
- ["Income","Expense","Debt","Dashboard"].forEach(x=>document.getElementById("tab"+x).classList.remove("active"));
+ document.getElementById("progress").style.width=({income:"16%",expense:"33%",debt:"50%",investment:"66%",donation:"83%",dashboard:"100%"})[phase];
+ ["Income","Expense","Debt","Investment","Donation","Dashboard"].forEach(x=>document.getElementById("tab"+x).classList.remove("active"));
  document.getElementById("tab"+phase[0].toUpperCase()+phase.slice(1)).classList.add("active");
 }
 function goTab(target){
  if(target==="expense" && !data.income.length){alert("Primero agrega al menos un ingreso.");return;}
  if(target==="debt" && !data.expenses.length){alert("Primero agrega al menos un gasto.");return;}
- if(target==="dashboard" && (!data.income.length || !data.expenses.length || !data.debts.length)){
-   alert("Completa al menos un ingreso, un gasto y una deuda para ver el dashboard.");return;
+ if(target==="investment" && !data.debts.length){alert("Primero agrega al menos una deuda.");return;}
+ if(target==="donation" && !data.investment.length){alert("Primero agrega al menos una inversión.");return;}
+ if(target==="dashboard" && (!data.income.length || !data.expenses.length || !data.debts.length || !data.investment.length || !data.donation.length)){
+   alert("Completa al menos un registro en ingresos, gastos, deudas, inversiones y diezmo/donación para ver el dashboard.");return;
  }
  phase=target;
  render();
@@ -172,7 +185,7 @@ function nav(){
   const wizard=document.getElementById("wizard");
   if(welcome) welcome.classList.add("hidden");
   if(wizard) wizard.classList.remove("hidden");
-  ["stepIncome","stepExpense","stepDebt","stepDashboard"].forEach(x=>{
+  ["stepIncome","stepExpense","stepDebt","stepInvestment","stepDonation","stepDashboard"].forEach(x=>{
     const el=document.getElementById(x);
     if(el) el.classList.add("hidden");
   });
@@ -208,10 +221,28 @@ function renderDebt(){
  <div class="field"><label>Pago mensual</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></div>
  <div class="actions"><button type="button" class="primary" onclick="add('debts')">Agregar deuda</button></div>
  <div style="margin-top:18px"><span class="tag">${data.debts.length} deuda(s) · Total ${money(sum(data.debts))}</span></div>${entries(data.debts,"debts")}
- ${data.debts.length?`<div class="actions"><button type="button" class="secondary" onclick="phase='dashboard';render();">No agregar más deudas → Ver Dashboard</button></div>`:""}`;
+ ${data.debts.length?`<div class="actions"><button type="button" class="secondary" onclick="phase='investment';render();">No agregar más deudas → Inversiones</button></div>`:""}`;
+}
+function renderInvestment(){
+ const el=document.getElementById("stepInvestment");
+ el.innerHTML=`<h2>4. Inversiones</h2><p class="hint">Registra cada inversión que quieras hacer este mes: fondos, acciones, CDT, negocio, ahorro para inversión u otras.</p>
+ <div class="field"><label>Descripción de la inversión</label><input id="desc" placeholder="Ej. Inversión mensual" autocomplete="off"></div>
+ <div class="field"><label>Valor mensual</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></div>
+ <div class="actions"><button type="button" class="primary" onclick="add('investment')">Agregar inversión</button></div>
+ <div style="margin-top:18px"><span class="tag">${data.investment.length} inversión(es) · Total ${money(sum(data.investment))}</span></div>${entries(data.investment,"investment")}
+ ${data.investment.length?`<div class="actions"><button type="button" class="secondary" onclick="phase='donation';render();">No agregar más inversiones → Diezmo / Donación</button></div>`:""}`;
+}
+function renderDonation(){
+ const el=document.getElementById("stepDonation");
+ el.innerHTML=`<h2>5. Diezmo / Donación</h2><p class="hint">Registra tus diezmos, ofrendas o donaciones por separado. La referencia del dashboard es el 10% de tus ingresos, pero puedes registrar el valor que realmente destinas.</p>
+ <div class="field"><label>Descripción</label><input id="desc" placeholder="Ej. Diezmo / Ofrenda / Donación" autocomplete="off"></div>
+ <div class="field"><label>Valor</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></div>
+ <div class="actions"><button type="button" class="primary" onclick="add('donation')">Agregar diezmo / donación</button></div>
+ <div style="margin-top:18px"><span class="tag">${data.donation.length} registro(s) · Total ${money(sum(data.donation))}</span></div>${entries(data.donation,"donation")}
+ ${data.donation.length?`<div class="actions"><button type="button" class="secondary" onclick="phase='dashboard';render();">No agregar más → Ver Dashboard</button></div>`:""}`;
 }
 function add(type){
- const stepId = type==="income" ? "stepIncome" : (type==="expenses" ? "stepExpense" : "stepDebt");
+ const stepId = ({income:"stepIncome",expenses:"stepExpense",debts:"stepDebt",investment:"stepInvestment",donation:"stepDonation"})[type];
  const container=document.getElementById(stepId);
  const fields=container ? container.querySelectorAll("input") : [];
  const d=fields[0] ? fields[0].value.trim() : "";
@@ -228,14 +259,14 @@ function removeItem(type,i){
  if(confirm("¿Eliminar este registro?")){data[type].splice(i,1);persist();render();}
 }
 function renderDashboard(){
- const inc=sum(data.income), exp=sum(data.expenses), debt=sum(data.debts);
+ const inc=sum(data.income), exp=sum(data.expenses), debt=sum(data.debts), investReal=sum(data.investment), donationReal=sum(data.donation);
  const tithe=inc*.10, invest=inc*.10, debtSug=inc*.20, living=inc*.60;
- const remainingAfterReal=inc-exp-debt;
- const debtPct=inc?debt/inc*100:0, expPct=inc?exp/inc*100:0;
+ const remainingAfterReal=inc-exp-debt-investReal-donationReal;
+ const debtPct=inc?debt/inc*100:0, expPct=inc?exp/inc*100:0, investPct=inc?investReal/inc*100:0, donationPct=inc?donationReal/inc*100:0;
  const plannedTotal=debtSug+tithe+invest+living;
  const debtGap=debtSug-debt;
  const status=remainingAfterReal>=0;
- const pct=Math.min(100,Math.max(0,inc?((exp+debt)/inc)*100:0));
+ const pct=Math.min(100,Math.max(0,inc?((exp+debt+investReal+donationReal)/inc)*100:0));
  const el=document.getElementById("stepDashboard");
  el.innerHTML=`
  <div class="hero card" style="margin-bottom:12px">
@@ -252,6 +283,8 @@ function renderDashboard(){
   <div class="metric kpi"><div class="label">INGRESOS</div><div class="value">${money(inc)}</div><div class="mini">${data.income.length} registro(s)</div></div>
   <div class="metric kpi"><div class="label">GASTOS</div><div class="value">${money(exp)}</div><div class="mini">${expPct.toFixed(1)}% de ingresos</div></div>
   <div class="metric kpi"><div class="label">DEUDAS</div><div class="value">${money(debt)}</div><div class="mini">${debtPct.toFixed(1)}% de ingresos</div></div>
+  <div class="metric kpi"><div class="label">INVERSIONES</div><div class="value">${money(investReal)}</div><div class="mini">${investPct.toFixed(1)}% de ingresos</div></div>
+  <div class="metric kpi"><div class="label">DIEZMO / DONACIÓN</div><div class="value">${money(donationReal)}</div><div class="mini">${donationPct.toFixed(1)}% de ingresos</div></div>
   <div class="metric kpi"><div class="label">SALDO</div><div class="value ${status?'positive':'negative'}">${money(remainingAfterReal)}</div><div class="mini">${status?'Disponible':'Déficit'}</div></div>
  </div>
 
@@ -268,6 +301,26 @@ function renderDashboard(){
  </div>
 
  <div class="card">
+   <h3 style="margin:0 0 4px">Distribución real</h3>
+   <p class="hint">Así se repartieron realmente tus ingresos con los datos registrados.</p>
+   <div class="donutWrap"><div class="donut realDonut" style="background:${(()=>{
+     const vals=[exp,debt,investReal,donationReal,Math.max(0,remainingAfterReal)];
+     const total=vals.reduce((a,b)=>a+b,0);
+     if(total<=0)return 'conic-gradient(#e5e7eb 0 100%)';
+     const p1=vals[0]/total*100,p2=p1+vals[1]/total*100,p3=p2+vals[2]/total*100,p4=p3+vals[3]/total*100;
+     return `conic-gradient(#f87171 0 ${p1}%,#f59e0b ${p1}% ${p2}%,#60a5fa ${p2}% ${p3}%,#34d399 ${p3}% ${p4}%,#d1d5db ${p4}% 100%)`;
+   })()}"><div class="donutCenter"><b>${inc>0?((exp+debt+investReal+donationReal)/inc*100).toFixed(0):0}%</b><span>UTILIZADO</span></div></div></div>
+   <div class="legend">
+    <div><span class="dot" style="background:#f87171"></span>Gastos · ${inc?((exp/inc)*100).toFixed(1):'0.0'}%</div>
+    <div><span class="dot" style="background:#f59e0b"></span>Deudas · ${inc?((debt/inc)*100).toFixed(1):'0.0'}%</div>
+    <div><span class="dot" style="background:#60a5fa"></span>Inversiones · ${inc?((investReal/inc)*100).toFixed(1):'0.0'}%</div>
+    <div><span class="dot" style="background:#34d399"></span>Diezmo / donación · ${inc?((donationReal/inc)*100).toFixed(1):'0.0'}%</div>
+    <div><span class="dot" style="background:#d1d5db"></span>Saldo restante · ${inc?(Math.max(0,remainingAfterReal)/inc*100).toFixed(1):'0.0'}%</div>
+   </div>
+   <div class="chartNote">El saldo restante es lo que queda después de todas las salidas registradas.</div>
+ </div>
+
+ <div class="card">
    <h3 style="margin:0 0 6px">¿Cómo vas con tus deudas?</h3>
    <div class="row"><span>Pago real</span><span>${money(debt)} · ${debtPct.toFixed(1)}%</span></div>
    <div class="row"><span>Referencia 20%</span><span>${money(debtSug)}</span></div>
@@ -276,10 +329,43 @@ function renderDashboard(){
  </div>
 
  <div class="card">
+   <h3 style="margin:0 0 4px">Tu realidad vs. tu meta</h3>
+   <p class="hint">Compara lo que realmente registraste con la regla 20 / 10 / 10 / 60.</p>
+   ${(()=>{
+     const checks=[
+       {name:'Gastos',real:exp,target:living},
+       {name:'Deudas',real:debt,target:debtSug},
+       {name:'Inversiones',real:investReal,target:invest},
+       {name:'Diezmo / donación',real:donationReal,target:tithe}
+     ];
+     return checks.map(c=>{
+       const rp=inc?c.real/inc*100:0, tp=inc?c.target/inc*100:0, diff=rp-tp;
+       let cls='chipGood', label='En la meta';
+       if(Math.abs(diff)<=1){ cls='chipGood'; label='En la meta'; }
+       else if(diff<0){ cls='chipWarn'; label=`Faltan ${Math.abs(diff).toFixed(1)}%`; }
+       else { cls='chipOver'; label=`Excede ${diff.toFixed(1)}%`; }
+       return `<div class="row"><span><b>${c.name}</b><br><small>${rp.toFixed(1)}% real · ${tp.toFixed(1)}% meta</small></span><span><span class="statusChip ${cls}">${label}</span><br><small>${money(c.real)} vs ${money(c.target)}</small></span></div>`;
+     }).join('');
+   })()}
+   <div class="note">${(()=>{
+      if(!inc) return 'Registra ingresos para activar las recomendaciones.';
+      const diffExp=exp/living;
+      const msgs=[];
+      if(exp>living) msgs.push(`tus gastos están ${money(exp-living)} por encima del 60% sugerido`);
+      else msgs.push(`tienes ${money(living-exp)} de margen frente al 60% sugerido para vivir`);
+      if(debt>debtSug) msgs.push(`las deudas superan la referencia en ${money(debt-debtSug)}`);
+      else if(debt<debtSug) msgs.push(`a las deudas les faltan ${money(debtSug-debt)} para llegar al 20% de referencia`);
+      if(investReal<invest) msgs.push(`a inversión le faltan ${money(invest-investReal)} para el 10% sugerido`);
+      if(donationReal<tithe) msgs.push(`a diezmo/donación le faltan ${money(tithe-donationReal)} para el 10% sugerido`);
+      return 'Sugerencia: '+msgs.join('; ')+'.';
+   })()}</div>
+ </div>
+
+ <div class="card">
    <h3 style="margin:0 0 6px">Consumo de tus ingresos</h3>
-   <div class="row"><span>Gastos + deudas</span><span>${money(exp+debt)} · ${pct.toFixed(1)}%</span></div>
+   <div class="row"><span>Gastos + deudas + inversión + diezmo/donación</span><span>${money(exp+debt+investReal+donationReal)} · ${pct.toFixed(1)}%</span></div>
    <div class="pbar"><i style="width:${pct}%"></i></div>
-   <div class="row"><span>Saldo después de gastos + deudas</span><span class="${status?'positive':'negative'}">${money(remainingAfterReal)}</span></div>
+   <div class="row"><span>Saldo después de todas las salidas</span><span class="${status?'positive':'negative'}">${money(remainingAfterReal)}</span></div>
  </div>
 
  <div class="card">
@@ -287,20 +373,24 @@ function renderDashboard(){
    <div class="row"><span>Ingresos registrados</span><span>${money(inc)}</span></div>
    <div class="row"><span>Gastos registrados</span><span>${money(exp)}</span></div>
    <div class="row"><span>Deudas registradas</span><span>${money(debt)}</span></div>
-   <div class="row"><span>Diezmo sugerido</span><span>${money(tithe)}</span></div>
-   <div class="row"><span>Inversión sugerida</span><span>${money(invest)}</span></div>
+   <div class="row"><span>Inversiones registradas</span><span>${money(investReal)}</span></div>
+   <div class="row"><span>Diezmo / donación registrado</span><span>${money(donationReal)}</span></div>
+   <div class="row"><span>Diezmo sugerido (10%)</span><span>${money(tithe)}</span></div>
+   <div class="row"><span>Inversión sugerida (10%)</span><span>${money(invest)}</span></div>
  </div>
 
  <h3 style="margin:22px 4px 8px">Ingresos</h3>${entries(data.income,"income")}
  <h3 style="margin:22px 4px 8px">Gastos</h3>${entries(data.expenses,"expenses")}
  <h3 style="margin:22px 4px 8px">Deudas</h3>${entries(data.debts,"debts")}
+ <h3 style="margin:22px 4px 8px">Inversiones</h3>${entries(data.investment,"investment")}
+ <h3 style="margin:22px 4px 8px">Diezmo / Donación</h3>${entries(data.donation,"donation")}
 
  <div class="card" style="margin-top:18px">
    <h3 style="margin:0 0 6px">Mis meses guardados</h3>
    <p class="hint">Toca un mes para abrir su presupuesto.</p>
    ${Object.keys(store.months).sort().reverse().map(k=>{
-     const m=store.months[k], total=sum(m.income), gastos=sum(m.expenses), deudas=sum(m.debts);
-     return `<button type="button" class="row" style="width:100%;background:transparent;border:0;text-align:left;cursor:pointer" onclick="switchMonth('${k}')"><span>${monthLabel(k)}${k===activeMonth?' · Activo':''}</span><span>${money(total)} ingresos</span></button>`;
+     const m=store.months[k], total=sum(m.income), gastos=sum(m.expenses), deudas=sum(m.debts), inversiones=sum(m.investment), donaciones=sum(m.donation);
+     return `<button type="button" class="row" style="width:100%;background:transparent;border:0;text-align:left;cursor:pointer" onclick="switchMonth('${k}')"><span>${monthLabel(k)}${k===activeMonth?' · Activo':''}</span><span>${money(total)} ingresos · ${money(inversiones+donaciones)} asignados</span></button>`;
    }).join("")}
  </div>
 
@@ -331,6 +421,7 @@ function refreshMonthUI(){
 }
 function switchMonth(k){
  if(!store.months[k]) store.months[k]=blankMonth();
+ else store.months[k]=normalizeMonth(store.months[k]);
  persist();
  activeMonth=k;
  data=store.months[activeMonth];
