@@ -102,7 +102,22 @@ select:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(37,99,235,.10)
   <div id="stepDebt" class="hidden"></div>
   <div id="stepDashboard" class="hidden"></div>
 </section>
-<footer>Versión 2.2 · Los datos se guardan automáticamente en este iPhone mediante almacenamiento local. Puedes añadirla a la pantalla de inicio desde Safari → Compartir → “Añadir a pantalla de inicio”.</footer>
+
+<div id="monthModal" class="modal" aria-hidden="true">
+  <div class="sheet">
+    <h3>Crear presupuesto mensual</h3>
+    <p class="hint">Elige cualquier mes. Puedes crear meses pasados, el actual o futuros.</p>
+    <div class="field">
+      <label for="newMonthInput">Mes del presupuesto</label>
+      <input id="newMonthInput" type="month">
+    </div>
+    <div class="actions">
+      <button type="button" class="secondary" id="cancelMonthBtn">Cancelar</button>
+      <button type="button" class="primary" id="confirmMonthBtn">Crear mes</button>
+    </div>
+  </div>
+</div>
+<footer>Versión 2.4 · Los datos se guardan automáticamente en este iPhone mediante almacenamiento local. Puedes añadirla a la pantalla de inicio desde Safari → Compartir → “Añadir a pantalla de inicio”.</footer>
 </div>
 
 <script>
@@ -352,13 +367,15 @@ function createMonth(){
 }
 function initMonths(){
  const select=document.getElementById("monthSelect");
- const newBtn=document.getElementById("newMonthBtn");
  const cancel=document.getElementById("cancelMonthBtn");
  const confirm=document.getElementById("confirmMonthBtn");
  if(select) select.addEventListener("change",e=>switchMonth(e.target.value));
- if(newBtn) newBtn.addEventListener("click",openMonthModal);
  if(cancel) cancel.addEventListener("click",closeMonthModal);
  if(confirm) confirm.addEventListener("click",createMonth);
+ document.addEventListener("click",e=>{
+   const btn=e.target.closest && e.target.closest("#newMonthBtn");
+   if(btn){e.preventDefault();openMonthModal();}
+ });
  const modal=document.getElementById("monthModal");
  if(modal) modal.addEventListener("click",e=>{if(e.target===modal)closeMonthModal();});
  refreshMonthUI();
