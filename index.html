@@ -6,8 +6,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#0f172a">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icons/icon-180.png">
 <title>Presupuesto Financiero Personal</title>
 <style>
 :root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#667085;--primary:#0f172a;--accent:#2563eb;--green:#15803d;--red:#dc2626;--amber:#d97706;--line:#e5e7eb;--soft:#eef4ff}
@@ -86,7 +84,7 @@ footer{text-align:center;color:#98a2b3;font-size:12px;padding:12px 0}
   <div id="stepDebt" class="hidden"></div>
   <div id="stepDashboard" class="hidden"></div>
 </section>
-<footer>Versión 2 · Los datos se guardan automáticamente en este iPhone mediante almacenamiento local. Puedes añadirla a la pantalla de inicio desde Safari → Compartir → “Añadir a pantalla de inicio”.</footer>
+<footer>Versión 2.1 · Los datos se guardan automáticamente en este iPhone mediante almacenamiento local. Puedes añadirla a la pantalla de inicio desde Safari → Compartir → “Añadir a pantalla de inicio”.</footer>
 </div>
 
 <script>
@@ -132,7 +130,7 @@ function renderIncome(){
  const el=document.getElementById("stepIncome");
  el.innerHTML=`<h2>1. Ingresos</h2><p class="hint">Comienza con tu primer ingreso. Puedes agregar salario, honorarios, negocios, rentas u otras entradas de dinero.</p>
  <div class="field"><label>Descripción del ingreso</label><input id="desc" placeholder="Ej. Salario mensual" autocomplete="off"></div>
- <div class="field"><label>Valor mensual</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" placeholder="0"></div>
+ <div class="field"><label>Valor mensual</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></div>
  <div class="actions"><button type="button" class="primary" onclick="add('income')">Agregar ingreso</button></div>
  <div style="margin-top:18px"><span class="tag">${data.income.length} ingreso(s)</span></div>${entries(data.income,"income")}
  ${data.income.length?`<div class="actions"><button type="button" class="secondary" onclick="phase='expense';render();">No agregar más ingresos → Gastos</button></div>`:""}`;
@@ -141,7 +139,7 @@ function renderExpense(){
  const el=document.getElementById("stepExpense");
  el.innerHTML=`<h2>2. Gastos</h2><p class="hint">Ahora registra cada gasto por separado, tal como en el Excel: servicios, colegios, mercado, gasolina, salidas, etc.</p>
  <div class="field"><label>Descripción del gasto</label><input id="desc" placeholder="Ej. Internet" autocomplete="off"></div>
- <div class="field"><label>Valor mensual</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" placeholder="0"></div>
+ <div class="field"><label>Valor mensual</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></div>
  <div class="actions"><button type="button" class="primary" onclick="add('expenses')">Agregar gasto</button></div>
  <div style="margin-top:18px"><span class="tag">${data.expenses.length} gasto(s) · Total ${money(sum(data.expenses))}</span></div>${entries(data.expenses,"expenses")}
  ${data.expenses.length?`<div class="actions"><button type="button" class="secondary" onclick="phase='debt';render();">No agregar más gastos → Deudas</button></div>`:""}`;
@@ -150,15 +148,24 @@ function renderDebt(){
  const el=document.getElementById("stepDebt");
  el.innerHTML=`<h2>3. Deudas</h2><p class="hint">Registra cada deuda con su pago mensual. El dashboard comparará tu deuda real con la sugerencia del 20% de tus ingresos.</p>
  <div class="field"><label>Descripción de la deuda</label><input id="desc" placeholder="Ej. Crédito / tarjeta / préstamo" autocomplete="off"></div>
- <div class="field"><label>Pago mensual</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" placeholder="0"></div>
+ <div class="field"><label>Pago mensual</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></div>
  <div class="actions"><button type="button" class="primary" onclick="add('debts')">Agregar deuda</button></div>
  <div style="margin-top:18px"><span class="tag">${data.debts.length} deuda(s) · Total ${money(sum(data.debts))}</span></div>${entries(data.debts,"debts")}
  ${data.debts.length?`<div class="actions"><button type="button" class="secondary" onclick="phase='dashboard';render();">No agregar más deudas → Ver Dashboard</button></div>`:""}`;
 }
 function add(type){
- const d=document.getElementById("desc").value.trim(), a=Number(document.getElementById("amt").value);
- if(!d||!a||a<0){alert("Completa la descripción y un valor mayor que cero.");return;}
- data[type].push({description:d,amount:a});save();render();
+ const stepId = type==="income" ? "stepIncome" : (type==="expenses" ? "stepExpense" : "stepDebt");
+ const container=document.getElementById(stepId);
+ const fields=container ? container.querySelectorAll("input") : [];
+ const d=fields[0] ? fields[0].value.trim() : "";
+ const a=fields[1] ? Number(fields[1].value) : 0;
+ if(!d || !Number.isFinite(a) || a<=0){
+   alert("Completa la descripción y un valor mayor que cero.");
+   return;
+ }
+ data[type].push({description:d,amount:a});
+ save();
+ render();
 }
 function removeItem(type,i){
  if(confirm("¿Eliminar este registro?")){data[type].splice(i,1);save();render();}
@@ -254,11 +261,6 @@ if(document.readyState==="loading"){
   document.addEventListener("DOMContentLoaded",initApp);
 }else{
   initApp();
-}
-</script>
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
 }
 </script>
 </body>
