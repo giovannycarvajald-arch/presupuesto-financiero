@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>Presupuesto Financiero Personal</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#667085;--primary:#0f172a;--accent:#2563eb;--green:#15803d;--red:#dc2626;--amber:#d97706;--line:#e5e7eb;--soft:#eef4ff}
+*{transition:background-color .18s,border-color .18s,transform .12s}
+body{overscroll-behavior-y:none}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.app{max-width:620px;margin:auto;min-height:100vh;padding:env(safe-area-inset-top) 16px calc(28px + env(safe-area-inset-bottom))}
+header{padding:28px 4px 16px}.eyebrow{font-size:12px;font-weight:800;letter-spacing:.12em;color:var(--accent);text-transform:uppercase}
+h1{font-size:32px;line-height:1.05;margin:7px 0}.subtitle{color:var(--muted);font-size:15px;line-height:1.45}
+.progress{height:6px;background:#e6eaf0;border-radius:99px;overflow:hidden;margin:10px 0 20px}.progress>div{height:100%;background:var(--accent);border-radius:99px;transition:.25s}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 8px 30px rgba(15,23,42,.05);margin-bottom:14px}
+h2{font-size:22px;margin:0 0 7px}.hint{font-size:14px;color:var(--muted);margin:0 0 18px}
+label{display:block;font-size:13px;font-weight:700;margin:0 0 7px}.field{margin-bottom:15px}
+input{width:100%;height:52px;border:1px solid #d8dee8;border-radius:14px;background:#fff;padding:0 14px;font-size:17px;outline:none;color:var(--ink);-webkit-appearance:none}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(37,99,235,.10)}
+.amount{font-variant-numeric:tabular-nums}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+button{border:0;border-radius:14px;min-height:52px;padding:0 17px;font-size:16px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.primary{background:var(--primary);color:white;flex:1}.secondary{background:#eef1f5;color:var(--ink)}.ghost{background:transparent;color:var(--accent);border:1px solid #cbd8f7}
+.danger{color:var(--red);background:#fff1f2}.hidden{display:none!important}
+.entry{border:1px solid var(--line);border-radius:16px;padding:13px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;gap:10px}.entry strong{display:block}.entry small{color:var(--muted)}.entry button{min-height:38px;padding:0 11px;font-size:13px}
+.summaryGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{background:#f8fafc;border-radius:17px;padding:14px}.metric span{display:block;color:var(--muted);font-size:12px;font-weight:700}.metric b{display:block;font-size:20px;margin-top:5px;overflow-wrap:anywhere}
+.big{font-size:34px!important}.positive{color:var(--green)}.negative{color:var(--red)}
+.bar{height:11px;background:#e9edf3;border-radius:99px;overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);font-size:15px}.row:last-child{border-bottom:0}.row span:last-child{font-weight:800;text-align:right}
+.tag{display:inline-block;padding:5px 9px;border-radius:99px;background:var(--soft);color:var(--accent);font-size:12px;font-weight:800}
+.note{font-size:13px;color:var(--muted);line-height:1.5;background:#f8fafc;border-radius:14px;padding:12px;margin-top:14px}
+.check{padding:13px;border-radius:15px;background:#f8fafc;margin:8px 0}.check b{font-size:15px}.check span{float:right;font-weight:800}.ok{color:var(--green)}.warn{color:#b45309}
+footer{text-align:center;color:#98a2b3;font-size:12px;padding:12px 0}
+@media(max-width:390px){h1{font-size:28px}.card{padding:17px}.summaryGrid{grid-template-columns:1fr}.actions button{width:100%}}
+ 
+/* v2: app-style dashboard */
+.hero{background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;border:0}
+.hero .subtitle{color:#cbd5e1}
+.hero .eyebrow{color:#93c5fd}
+.tabbar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:#e9edf3;border-radius:16px;padding:5px;margin:0 0 14px;position:sticky;top:8px;z-index:5}
+.tabbar button{min-height:40px;padding:0 5px;background:transparent;color:#667085;font-size:12px}
+.tabbar button.active{background:#fff;color:#0f172a;box-shadow:0 2px 8px rgba(15,23,42,.08)}
+.kpi{position:relative;overflow:hidden}.kpi .label{color:var(--muted);font-size:12px;font-weight:800}.kpi .value{font-size:25px;font-weight:900;margin-top:5px}
+.kpi .mini{font-size:12px;color:var(--muted);margin-top:5px}
+.donutWrap{display:flex;align-items:center;justify-content:center;padding:8px 0 16px}
+.donut{width:190px;height:190px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent) 0 20%,#60a5fa 20% 30%,#34d399 30% 40%,#e5e7eb 40% 100%);position:relative}
+.donut:after{content:"";width:112px;height:112px;background:#fff;border-radius:50%;position:absolute}
+.donutCenter{position:relative;z-index:1;text-align:center}.donutCenter b{font-size:24px;display:block}.donutCenter span{font-size:11px;color:var(--muted);font-weight:700}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:8px}.legend div{font-size:12px;font-weight:700;padding:9px;border-radius:12px;background:#f8fafc}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:var(--accent)}
+.pbar{height:12px;background:#e8ecf2;border-radius:99px;overflow:hidden}.pbar>i{display:block;height:100%;border-radius:99px;background:var(--accent)}
+.swipeHint{font-size:12px;color:var(--muted);text-align:center;margin-top:8px}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:20;display:none;align-items:flex-end}.modal.show{display:flex}.sheet{width:100%;max-width:620px;margin:auto;background:#fff;border-radius:24px 24px 0 0;padding:20px calc(20px + env(safe-area-inset-right)) calc(25px + env(safe-area-inset-bottom))}.sheet h3{margin-top:0}
+@media(min-width:621px){.modal{align-items:center}.sheet{border-radius:24px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="eyebrow">Tu dinero · Tu decisión · Tu futuro</div>
+  <h1>Presupuesto Financiero Personal</h1>
+  <div class="subtitle">Registra tus ingresos, gastos y deudas paso a paso. Al final tendrás un dashboard con tus cifras reales y una distribución sugerida.</div>
+</header>
+<div class="progress"><div id="progress"></div></div>
+<div id="tabs" class="tabbar" aria-label="Secciones">
+ <button type="button" id="tabIncome" data-tab="income">Ingresos</button>
+ <button type="button" id="tabExpense" data-tab="expense">Gastos</button>
+ <button type="button" id="tabDebt" data-tab="debt">Deudas</button>
+ <button type="button" id="tabDashboard" data-tab="dashboard">Dashboard</button>
+</div>
+<section id="welcome" class="card" style="text-align:center">
+  <div style="font-size:48px;margin-bottom:8px">💰</div>
+  <h2>Comencemos tu presupuesto</h2>
+  <p class="hint">Primero vamos a registrar tus ingresos. Después pasaremos a gastos, deudas y finalmente al dashboard.</p>
+  <button type="button" class="primary" id="startBtn" style="width:100%">Comenzar con mis ingresos</button>
+  <div class="note" style="text-align:left;margin-top:14px">No necesitas llenar todo de una vez. Los datos se guardan automáticamente en este navegador.</div>
+</section>
+
+<section id="wizard" class="card hidden">
+  <div id="stepIncome"></div>
+  <div id="stepExpense" class="hidden"></div>
+  <div id="stepDebt" class="hidden"></div>
+  <div id="stepDashboard" class="hidden"></div>
+</section>
+<footer>Versión 2 · Los datos se guardan automáticamente en este iPhone mediante almacenamiento local. Puedes añadirla a la pantalla de inicio desde Safari → Compartir → “Añadir a pantalla de inicio”.</footer>
+</div>
+
+<script>
+const KEY="presupuesto_personal_v1";
+let data=JSON.parse(localStorage.getItem(KEY)||'null')||{income:[],expenses:[],debts:[]};
+let phase="income";
+const money=n=>new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(Number(n)||0);
+const sum=a=>a.reduce((t,x)=>t+(Number(x.amount)||0),0);
+function save(){localStorage.setItem(KEY,JSON.stringify(data));}
+function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
+function setProgress(){
+ document.getElementById("progress").style.width=({income:"25%",expense:"50%",debt:"75%",dashboard:"100%"})[phase];
+ ["Income","Expense","Debt","Dashboard"].forEach(x=>document.getElementById("tab"+x).classList.remove("active"));
+ document.getElementById("tab"+phase[0].toUpperCase()+phase.slice(1)).classList.add("active");
+}
+function goTab(target){
+ if(target==="expense" && !data.income.length){alert("Primero agrega al menos un ingreso.");return;}
+ if(target==="debt" && !data.expenses.length){alert("Primero agrega al menos un gasto.");return;}
+ if(target==="dashboard" && (!data.income.length || !data.expenses.length || !data.debts.length)){
+   alert("Completa al menos un ingreso, un gasto y una deuda para ver el dashboard.");return;
+ }
+ phase=target;
+ render();
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+function nav(){
+  const welcome=document.getElementById("welcome");
+  const wizard=document.getElementById("wizard");
+  if(welcome) welcome.classList.add("hidden");
+  if(wizard) wizard.classList.remove("hidden");
+  ["stepIncome","stepExpense","stepDebt","stepDashboard"].forEach(x=>{
+    const el=document.getElementById(x);
+    if(el) el.classList.add("hidden");
+  });
+  const active=document.getElementById("step"+phase[0].toUpperCase()+phase.slice(1));
+  if(active) active.classList.remove("hidden");
+  setProgress();
+}
+function entries(arr,type){
+ return arr.length?arr.map((x,i)=>`<div class="entry"><div><strong>${esc(x.description)}</strong><small>${money(x.amount)}</small></div><button type="button" class="danger" onclick="removeItem('${type}',${i})">Eliminar</button></div>`).join(""):`<div class="note">Aún no has agregado registros.</div>`;
+}
+function renderIncome(){
+ const el=document.getElementById("stepIncome");
+ el.innerHTML=`<h2>1. Ingresos</h2><p class="hint">Comienza con tu primer ingreso. Puedes agregar salario, honorarios, negocios, rentas u otras entradas de dinero.</p>
+ <div class="field"><label>Descripción del ingreso</label><input id="desc" placeholder="Ej. Salario mensual" autocomplete="off"></div>
+ <div class="field"><label>Valor mensual</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" placeholder="0"></div>
+ <div class="actions"><button type="button" class="primary" onclick="add('income')">Agregar ingreso</button></div>
+ <div style="margin-top:18px"><span class="tag">${data.income.length} ingreso(s)</span></div>${entries(data.income,"income")}
+ ${data.income.length?`<div class="actions"><button type="button" class="secondary" onclick="phase='expense';render();">No agregar más ingresos → Gastos</button></div>`:""}`;
+}
+function renderExpense(){
+ const el=document.getElementById("stepExpense");
+ el.innerHTML=`<h2>2. Gastos</h2><p class="hint">Ahora registra cada gasto por separado, tal como en el Excel: servicios, colegios, mercado, gasolina, salidas, etc.</p>
+ <div class="field"><label>Descripción del gasto</label><input id="desc" placeholder="Ej. Internet" autocomplete="off"></div>
+ <div class="field"><label>Valor mensual</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" placeholder="0"></div>
+ <div class="actions"><button type="button" class="primary" onclick="add('expenses')">Agregar gasto</button></div>
+ <div style="margin-top:18px"><span class="tag">${data.expenses.length} gasto(s) · Total ${money(sum(data.expenses))}</span></div>${entries(data.expenses,"expenses")}
+ ${data.expenses.length?`<div class="actions"><button type="button" class="secondary" onclick="phase='debt';render();">No agregar más gastos → Deudas</button></div>`:""}`;
+}
+function renderDebt(){
+ const el=document.getElementById("stepDebt");
+ el.innerHTML=`<h2>3. Deudas</h2><p class="hint">Registra cada deuda con su pago mensual. El dashboard comparará tu deuda real con la sugerencia del 20% de tus ingresos.</p>
+ <div class="field"><label>Descripción de la deuda</label><input id="desc" placeholder="Ej. Crédito / tarjeta / préstamo" autocomplete="off"></div>
+ <div class="field"><label>Pago mensual</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" placeholder="0"></div>
+ <div class="actions"><button type="button" class="primary" onclick="add('debts')">Agregar deuda</button></div>
+ <div style="margin-top:18px"><span class="tag">${data.debts.length} deuda(s) · Total ${money(sum(data.debts))}</span></div>${entries(data.debts,"debts")}
+ ${data.debts.length?`<div class="actions"><button type="button" class="secondary" onclick="phase='dashboard';render();">No agregar más deudas → Ver Dashboard</button></div>`:""}`;
+}
+function add(type){
+ const d=document.getElementById("desc").value.trim(), a=Number(document.getElementById("amt").value);
+ if(!d||!a||a<0){alert("Completa la descripción y un valor mayor que cero.");return;}
+ data[type].push({description:d,amount:a});save();render();
+}
+function removeItem(type,i){
+ if(confirm("¿Eliminar este registro?")){data[type].splice(i,1);save();render();}
+}
+function renderDashboard(){
+ const inc=sum(data.income), exp=sum(data.expenses), debt=sum(data.debts);
+ const tithe=inc*.10, invest=inc*.10, debtSug=inc*.20, living=inc*.60;
+ const remainingAfterReal=inc-exp-debt;
+ const debtPct=inc?debt/inc*100:0, expPct=inc?exp/inc*100:0;
+ const plannedTotal=debtSug+tithe+invest+living;
+ const debtGap=debtSug-debt;
+ const status=remainingAfterReal>=0;
+ const pct=Math.min(100,Math.max(0,inc?((exp+debt)/inc)*100:0));
+ const el=document.getElementById("stepDashboard");
+ el.innerHTML=`
+ <div class="hero card" style="margin-bottom:12px">
+   <div class="eyebrow">Resumen financiero</div>
+   <h2 style="font-size:28px;margin-top:6px">Tu dinero, en una sola vista</h2>
+   <p class="subtitle">Todo lo que aparece aquí sale de los valores que registraste.</p>
+   <div class="metric" style="background:rgba(255,255,255,.1);margin-top:14px;border:1px solid rgba(255,255,255,.12)">
+     <span style="color:#cbd5e1">DINERO DESPUÉS DE GASTOS + DEUDAS</span>
+     <b class="big">${money(remainingAfterReal)}</b>
+   </div>
+ </div>
+
+ <div class="summaryGrid">
+  <div class="metric kpi"><div class="label">INGRESOS</div><div class="value">${money(inc)}</div><div class="mini">${data.income.length} registro(s)</div></div>
+  <div class="metric kpi"><div class="label">GASTOS</div><div class="value">${money(exp)}</div><div class="mini">${expPct.toFixed(1)}% de ingresos</div></div>
+  <div class="metric kpi"><div class="label">DEUDAS</div><div class="value">${money(debt)}</div><div class="mini">${debtPct.toFixed(1)}% de ingresos</div></div>
+  <div class="metric kpi"><div class="label">SALDO</div><div class="value ${status?'positive':'negative'}">${money(remainingAfterReal)}</div><div class="mini">${status?'Disponible':'Déficit'}</div></div>
+ </div>
+
+ <div class="card" style="margin-top:14px">
+   <h3 style="margin:0 0 4px">Regla 20 / 10 / 10 / 60</h3>
+   <p class="hint">Distribución sugerida sobre tus ingresos.</p>
+   <div class="donutWrap"><div class="donut"><div class="donutCenter"><b>100%</b><span>PLAN</span></div></div></div>
+   <div class="legend">
+    <div><span class="dot"></span>Deudas 20% · ${money(debtSug)}</div>
+    <div><span class="dot" style="background:#60a5fa"></span>Diezmo 10% · ${money(tithe)}</div>
+    <div><span class="dot" style="background:#34d399"></span>Inversión 10% · ${money(invest)}</div>
+    <div><span class="dot" style="background:#d1d5db"></span>Vivir 60% · ${money(living)}</div>
+   </div>
+ </div>
+
+ <div class="card">
+   <h3 style="margin:0 0 6px">¿Cómo vas con tus deudas?</h3>
+   <div class="row"><span>Pago real</span><span>${money(debt)} · ${debtPct.toFixed(1)}%</span></div>
+   <div class="row"><span>Referencia 20%</span><span>${money(debtSug)}</span></div>
+   <div class="pbar" style="margin-top:12px"><i style="width:${Math.min(100,debtPct*5)}%"></i></div>
+   <div class="note">${debt<=debtSug?`Vas ${money(debtSug-debt)} por debajo de la referencia del 20%.`:`Estás ${money(debt-debtSug)} por encima de la referencia del 20%.`}</div>
+ </div>
+
+ <div class="card">
+   <h3 style="margin:0 0 6px">Consumo de tus ingresos</h3>
+   <div class="row"><span>Gastos + deudas</span><span>${money(exp+debt)} · ${pct.toFixed(1)}%</span></div>
+   <div class="pbar"><i style="width:${pct}%"></i></div>
+   <div class="row"><span>Saldo después de gastos + deudas</span><span class="${status?'positive':'negative'}">${money(remainingAfterReal)}</span></div>
+ </div>
+
+ <div class="card">
+   <h3 style="margin:0 0 5px">Detalle real</h3>
+   <div class="row"><span>Ingresos registrados</span><span>${money(inc)}</span></div>
+   <div class="row"><span>Gastos registrados</span><span>${money(exp)}</span></div>
+   <div class="row"><span>Deudas registradas</span><span>${money(debt)}</span></div>
+   <div class="row"><span>Diezmo sugerido</span><span>${money(tithe)}</span></div>
+   <div class="row"><span>Inversión sugerida</span><span>${money(invest)}</span></div>
+ </div>
+
+ <h3 style="margin:22px 4px 8px">Ingresos</h3>${entries(data.income,"income")}
+ <h3 style="margin:22px 4px 8px">Gastos</h3>${entries(data.expenses,"expenses")}
+ <h3 style="margin:22px 4px 8px">Deudas</h3>${entries(data.debts,"debts")}
+
+ <div class="actions" style="margin-top:18px">
+   <button type="button" class="ghost" onclick="downloadData()">Exportar datos</button>
+   <button type="button" class="secondary" onclick="resetAll()">Nuevo presupuesto</button>
+ </div>`;
+}
+function downloadData(){
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}), url=URL.createObjectURL(blob), a=document.createElement("a");
+ a.href=url;a.download="presupuesto_financiero.json";a.click();URL.revokeObjectURL(url);
+}
+function resetAll(){if(confirm("¿Borrar todos los datos y comenzar de nuevo?")){data={income:[],expenses:[],debts:[]};save();phase="income";render();}}
+function render(){renderIncome();renderExpense();renderDebt();renderDashboard();nav();}
+function initApp(){
+  document.querySelectorAll("[data-tab]").forEach(btn=>{
+    btn.addEventListener("click",()=>goTab(btn.dataset.tab));
+  });
+  const start=document.getElementById("startBtn");
+  if(start) start.addEventListener("click",()=>goTab("income"));
+  render();
+}
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded",initApp);
+}else{
+  initApp();
+}
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
