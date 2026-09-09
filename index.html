@@ -124,7 +124,7 @@ select:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(37,99,235,.10)
     </div>
   </div>
 </div>
-<footer>Versión 2.5 · Los datos se guardan automáticamente en este iPhone mediante almacenamiento local. Puedes añadirla a la pantalla de inicio desde Safari → Compartir → “Añadir a pantalla de inicio”.</footer>
+<footer>Versión 2.8 · Los datos se guardan automáticamente en este iPhone mediante almacenamiento local. Puedes añadirla a la pantalla de inicio desde Safari → Compartir → “Añadir a pantalla de inicio”.</footer>
 </div>
 
 <script>
@@ -472,7 +472,7 @@ function initMonths(){
  refreshMonthUI();
 }
 
-function render(){refreshMonthUI();renderIncome();renderExpense();renderDebt();renderDashboard();nav();}
+function render(){refreshMonthUI();renderIncome();renderExpense();renderDebt();renderInvestment();renderDonation();renderDashboard();nav();}
 function initApp(){
   initMonths();
   document.querySelectorAll("[data-tab]").forEach(btn=>{
