@@ -54,6 +54,9 @@ footer{text-align:center;color:#98a2b3;font-size:12px;padding:12px 0}
 .swipeHint{font-size:12px;color:var(--muted);text-align:center;margin-top:8px}
 .modal{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:20;display:none;align-items:flex-end}.modal.show{display:flex}.sheet{width:100%;max-width:620px;margin:auto;background:#fff;border-radius:24px 24px 0 0;padding:20px calc(20px + env(safe-area-inset-right)) calc(25px + env(safe-area-inset-bottom))}.sheet h3{margin-top:0}
 @media(min-width:621px){.modal{align-items:center}.sheet{border-radius:24px}}
+
+select{font-family:inherit;outline:none}
+select:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(37,99,235,.10)}
 </style>
 </head>
 <body>
@@ -64,6 +67,21 @@ footer{text-align:center;color:#98a2b3;font-size:12px;padding:12px 0}
   <div class="subtitle">Registra tus ingresos, gastos y deudas paso a paso. Al final tendrás un dashboard con tus cifras reales y una distribución sugerida.</div>
 </header>
 <div class="progress"><div id="progress"></div></div>
+
+<div id="monthPanel" class="card" style="padding:14px;margin-bottom:12px">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+    <div>
+      <div class="eyebrow" style="font-size:10px">Presupuesto activo</div>
+      <div id="activeMonthLabel" style="font-size:18px;font-weight:900;margin-top:3px">Mes actual</div>
+    </div>
+    <button type="button" class="secondary" id="newMonthBtn" style="min-height:44px;padding:0 12px">＋ Nuevo mes</button>
+  </div>
+  <div style="margin-top:10px">
+    <select id="monthSelect" style="width:100%;height:48px;border:1px solid #d8dee8;border-radius:14px;background:#fff;padding:0 12px;font-size:16px;color:var(--ink);-webkit-appearance:auto"></select>
+  </div>
+  <div class="swipeHint">Cada mes tiene sus propios ingresos, gastos y deudas y queda guardado en este iPhone.</div>
+</div>
+
 <div id="tabs" class="tabbar" aria-label="Secciones">
  <button type="button" id="tabIncome" data-tab="income">Ingresos</button>
  <button type="button" id="tabExpense" data-tab="expense">Gastos</button>
@@ -84,16 +102,40 @@ footer{text-align:center;color:#98a2b3;font-size:12px;padding:12px 0}
   <div id="stepDebt" class="hidden"></div>
   <div id="stepDashboard" class="hidden"></div>
 </section>
-<footer>Versión 2.1 · Los datos se guardan automáticamente en este iPhone mediante almacenamiento local. Puedes añadirla a la pantalla de inicio desde Safari → Compartir → “Añadir a pantalla de inicio”.</footer>
+<footer>Versión 2.2 · Los datos se guardan automáticamente en este iPhone mediante almacenamiento local. Puedes añadirla a la pantalla de inicio desde Safari → Compartir → “Añadir a pantalla de inicio”.</footer>
 </div>
 
 <script>
-const KEY="presupuesto_personal_v1";
-let data=JSON.parse(localStorage.getItem(KEY)||'null')||{income:[],expenses:[],debts:[]};
+const KEY="presupuesto_personal_v2_months";
+const OLD_KEY="presupuesto_personal_v1";
+function monthKey(d=new Date()){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0");
+  return `${y}-${m}`;
+}
+function blankMonth(){return {income:[],expenses:[],debts:[]};}
+function monthLabel(key){
+  const [y,m]=key.split("-").map(Number);
+  return new Intl.DateTimeFormat("es-CO",{month:"long",year:"numeric"}).format(new Date(y,m-1,1));
+}
+let store=JSON.parse(localStorage.getItem(KEY)||"null");
+if(!store || !store.months){
+  const old=JSON.parse(localStorage.getItem(OLD_KEY)||"null");
+  const k=monthKey();
+  store={months:{[k]:old&&old.income?old:blankMonth()},active:k};
+  localStorage.setItem(KEY,JSON.stringify(store));
+}
+let activeMonth=store.active || monthKey();
+if(!store.months[activeMonth]) store.months[activeMonth]=blankMonth();
+let data=store.months[activeMonth];
 let phase="income";
+function persist(){
+  store.months[activeMonth]=data;
+  store.active=activeMonth;
+  localStorage.setItem(KEY,JSON.stringify(store));
+}
 const money=n=>new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(Number(n)||0);
 const sum=a=>a.reduce((t,x)=>t+(Number(x.amount)||0),0);
-function save(){localStorage.setItem(KEY,JSON.stringify(data));}
+function save(){persist();}
 function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
 function setProgress(){
  document.getElementById("progress").style.width=({income:"25%",expense:"50%",debt:"75%",dashboard:"100%"})[phase];
@@ -164,11 +206,11 @@ function add(type){
    return;
  }
  data[type].push({description:d,amount:a});
- save();
+ persist();
  render();
 }
 function removeItem(type,i){
- if(confirm("¿Eliminar este registro?")){data[type].splice(i,1);save();render();}
+ if(confirm("¿Eliminar este registro?")){data[type].splice(i,1);persist();render();}
 }
 function renderDashboard(){
  const inc=sum(data.income), exp=sum(data.expenses), debt=sum(data.debts);
@@ -182,7 +224,7 @@ function renderDashboard(){
  const el=document.getElementById("stepDashboard");
  el.innerHTML=`
  <div class="hero card" style="margin-bottom:12px">
-   <div class="eyebrow">Resumen financiero</div>
+   <div class="eyebrow">Resumen financiero · ${monthLabel(activeMonth)}</div>
    <h2 style="font-size:28px;margin-top:6px">Tu dinero, en una sola vista</h2>
    <p class="subtitle">Todo lo que aparece aquí sale de los valores que registraste.</p>
    <div class="metric" style="background:rgba(255,255,255,.1);margin-top:14px;border:1px solid rgba(255,255,255,.12)">
@@ -238,18 +280,93 @@ function renderDashboard(){
  <h3 style="margin:22px 4px 8px">Gastos</h3>${entries(data.expenses,"expenses")}
  <h3 style="margin:22px 4px 8px">Deudas</h3>${entries(data.debts,"debts")}
 
+ <div class="card" style="margin-top:18px">
+   <h3 style="margin:0 0 6px">Mis meses guardados</h3>
+   <p class="hint">Toca un mes para abrir su presupuesto.</p>
+   ${Object.keys(store.months).sort().reverse().map(k=>{
+     const m=store.months[k], total=sum(m.income), gastos=sum(m.expenses), deudas=sum(m.debts);
+     return `<button type="button" class="row" style="width:100%;background:transparent;border:0;text-align:left;cursor:pointer" onclick="switchMonth('${k}')"><span>${monthLabel(k)}${k===activeMonth?' · Activo':''}</span><span>${money(total)} ingresos</span></button>`;
+   }).join("")}
+ </div>
+
  <div class="actions" style="margin-top:18px">
-   <button type="button" class="ghost" onclick="downloadData()">Exportar datos</button>
+   <button type="button" class="ghost" onclick="downloadData()">Exportar todos los meses</button>
    <button type="button" class="secondary" onclick="resetAll()">Nuevo presupuesto</button>
  </div>`;
 }
 function downloadData(){
- const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}), url=URL.createObjectURL(blob), a=document.createElement("a");
- a.href=url;a.download="presupuesto_financiero.json";a.click();URL.revokeObjectURL(url);
+ persist();
+ const blob=new Blob([JSON.stringify(store,null,2)],{type:"application/json"}), url=URL.createObjectURL(blob), a=document.createElement("a");
+ a.href=url;a.download="presupuestos_financieros_todos_los_meses.json";a.click();URL.revokeObjectURL(url);
 }
-function resetAll(){if(confirm("¿Borrar todos los datos y comenzar de nuevo?")){data={income:[],expenses:[],debts:[]};save();phase="income";render();}}
-function render(){renderIncome();renderExpense();renderDebt();renderDashboard();nav();}
+function resetAll(){
+ if(confirm(`¿Borrar todos los datos de ${monthLabel(activeMonth)} y comenzar de nuevo?`)){
+   data=blankMonth(); store.months[activeMonth]=data; persist(); phase="income"; render();
+ }
+}
+
+function refreshMonthUI(){
+ const select=document.getElementById("monthSelect");
+ if(!select) return;
+ const keys=Object.keys(store.months).sort().reverse();
+ select.innerHTML=keys.map(k=>`<option value="${k}">${monthLabel(k)}</option>`).join("");
+ select.value=activeMonth;
+ const label=document.getElementById("activeMonthLabel");
+ if(label) label.textContent=monthLabel(activeMonth).replace(/^./,c=>c.toUpperCase());
+}
+function switchMonth(k){
+ if(!store.months[k]) store.months[k]=blankMonth();
+ persist();
+ activeMonth=k;
+ data=store.months[activeMonth];
+ phase="income";
+ render();
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+function openMonthModal(){
+ const modal=document.getElementById("monthModal");
+ const input=document.getElementById("newMonthInput");
+ if(input) input.value=monthKey();
+ if(modal){modal.classList.add("show");modal.setAttribute("aria-hidden","false");}
+}
+function closeMonthModal(){
+ const modal=document.getElementById("monthModal");
+ if(modal){modal.classList.remove("show");modal.setAttribute("aria-hidden","true");}
+}
+function createMonth(){
+ const input=document.getElementById("newMonthInput");
+ const k=input && input.value;
+ if(!k){alert("Selecciona un mes.");return;}
+ if(store.months[k]){
+   closeMonthModal();
+   switchMonth(k);
+   return;
+ }
+ store.months[k]=blankMonth();
+ persist();
+ closeMonthModal();
+ activeMonth=k;
+ data=store.months[activeMonth];
+ phase="income";
+ render();
+}
+function initMonths(){
+ const select=document.getElementById("monthSelect");
+ const newBtn=document.getElementById("newMonthBtn");
+ const cancel=document.getElementById("cancelMonthBtn");
+ const confirm=document.getElementById("confirmMonthBtn");
+ if(select) select.addEventListener("change",e=>switchMonth(e.target.value));
+ if(newBtn) newBtn.addEventListener("click",openMonthModal);
+ if(cancel) cancel.addEventListener("click",closeMonthModal);
+ if(confirm) confirm.addEventListener("click",createMonth);
+ const modal=document.getElementById("monthModal");
+ if(modal) modal.addEventListener("click",e=>{if(e.target===modal)closeMonthModal();});
+ refreshMonthUI();
+}
+
+function render(){refreshMonthUI();renderIncome();renderExpense();renderDebt();renderDashboard();nav();}
 function initApp(){
+  initMonths();
   document.querySelectorAll("[data-tab]").forEach(btn=>{
     btn.addEventListener("click",()=>goTab(btn.dataset.tab));
   });

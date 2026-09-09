@@ -1,13 +1,23 @@
 {
-  "name":"Presupuesto Financiero Personal",
-  "short_name":"Presupuesto",
-  "start_url":"./",
-  "display":"standalone",
-  "background_color":"#f4f7fb",
-  "theme_color":"#0f172a",
-  "description":"Presupuesto personal para ingresos, gastos, deudas y planificación 20/10/10/60.",
-  "icons":[
-    {"src":"icons/icon-180.png","sizes":"180x180","type":"image/png","purpose":"any maskable"},
-    {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  "name": "Presupuesto Financiero Personal",
+  "short_name": "Presupuesto",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#0f172a",
+  "description": "Presupuesto personal mensual para ingresos, gastos, deudas y planificación 20/10/10/60.",
+  "icons": [
+    {
+      "src": "icons/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }
