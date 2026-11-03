@@ -118,13 +118,20 @@ select:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(37,99,235,.10)
       <label for="newMonthInput">Mes del presupuesto</label>
       <input id="newMonthInput" type="month">
     </div>
+    <div class="field">
+      <label for="copyMonthSelect">Copiar registros de otro mes (opcional)</label>
+      <select id="copyMonthSelect" style="width:100%;height:52px;border:1px solid #d8dee8;border-radius:14px;background:#fff;padding:0 12px;font-size:16px;color:var(--ink)">
+        <option value="">Crear mes en blanco</option>
+      </select>
+      <div class="note" style="margin-top:8px">Se copiarán ingresos, gastos, deudas, inversiones y donaciones. Luego podrás editar o eliminar cada registro sin cambiar el mes original.</div>
+    </div>
     <div class="actions">
       <button type="button" class="secondary" id="cancelMonthBtn">Cancelar</button>
       <button type="button" class="primary" id="confirmMonthBtn">Crear mes</button>
     </div>
   </div>
 </div>
-<footer>Versión 2.9 · Los datos se guardan automáticamente en este iPhone mediante almacenamiento local. Puedes añadirla a la pantalla de inicio desde Safari → Compartir → “Añadir a pantalla de inicio”.</footer>
+<footer>Versión 3.0 · Los datos se guardan automáticamente en este iPhone mediante almacenamiento local. Puedes añadirla a la pantalla de inicio desde Safari → Compartir → “Añadir a pantalla de inicio”.</footer>
 </div>
 
 <script>
@@ -452,10 +459,28 @@ function switchMonth(k){
  render();
  window.scrollTo({top:0,behavior:"smooth"});
 }
+function previousMonthKey(key){
+ const [year,month]=key.split("-").map(Number);
+ const date=new Date(year,month-2,1);
+ return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}`;
+}
+function updateCopyMonthOptions(preferred){
+ const target=document.getElementById("newMonthInput");
+ const select=document.getElementById("copyMonthSelect");
+ if(!target || !select) return;
+ const targetKey=target.value;
+ const previous=previousMonthKey(targetKey);
+ const current=select.value;
+ const keys=Object.keys(store.months).filter(k=>k!==targetKey).sort().reverse();
+ select.innerHTML='<option value="">Crear mes en blanco</option>'+keys.map(k=>`<option value="${k}">${monthLabel(k)}</option>`).join("");
+ const desired=preferred!==undefined?preferred:(keys.includes(current)?current:(keys.includes(previous)?previous:""));
+ select.value=keys.includes(desired)?desired:"";
+}
 function openMonthModal(){
  const modal=document.getElementById("monthModal");
  const input=document.getElementById("newMonthInput");
  if(input) input.value=monthKey();
+ updateCopyMonthOptions();
  if(modal){modal.classList.add("show");modal.setAttribute("aria-hidden","false");}
 }
 function closeMonthModal(){
@@ -464,14 +489,17 @@ function closeMonthModal(){
 }
 function createMonth(){
  const input=document.getElementById("newMonthInput");
+ const copySelect=document.getElementById("copyMonthSelect");
  const k=input && input.value;
+ const sourceKey=copySelect?copySelect.value:"";
  if(!k){alert("Selecciona un mes.");return;}
  if(store.months[k]){
    closeMonthModal();
    switchMonth(k);
    return;
  }
- store.months[k]=blankMonth();
+ const source=sourceKey && store.months[sourceKey]?normalizeMonth(store.months[sourceKey]):blankMonth();
+ store.months[k]=JSON.parse(JSON.stringify(source));
  persist();
  closeMonthModal();
  activeMonth=k;
@@ -483,7 +511,9 @@ function initMonths(){
  const select=document.getElementById("monthSelect");
  const cancel=document.getElementById("cancelMonthBtn");
  const confirm=document.getElementById("confirmMonthBtn");
+ const newMonthInput=document.getElementById("newMonthInput");
  if(select) select.addEventListener("change",e=>switchMonth(e.target.value));
+ if(newMonthInput) newMonthInput.addEventListener("change",()=>updateCopyMonthOptions());
  if(cancel) cancel.addEventListener("click",closeMonthModal);
  if(confirm) confirm.addEventListener("click",createMonth);
  document.addEventListener("click",e=>{
