@@ -124,7 +124,7 @@ select:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(37,99,235,.10)
     </div>
   </div>
 </div>
-<footer>Versión 2.8 · Los datos se guardan automáticamente en este iPhone mediante almacenamiento local. Puedes añadirla a la pantalla de inicio desde Safari → Compartir → “Añadir a pantalla de inicio”.</footer>
+<footer>Versión 2.9 · Los datos se guardan automáticamente en este iPhone mediante almacenamiento local. Puedes añadirla a la pantalla de inicio desde Safari → Compartir → “Añadir a pantalla de inicio”.</footer>
 </div>
 
 <script>
@@ -160,6 +160,12 @@ function persist(){
   localStorage.setItem(KEY,JSON.stringify(store));
 }
 const money=n=>new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(Number(n)||0);
+function digitsOnly(value){return String(value??"").replace(/\D/g,"");}
+function formatAmountInput(input){
+ const digits=digitsOnly(input.value);
+ input.value=digits?new Intl.NumberFormat("es-CO",{maximumFractionDigits:0}).format(Number(digits)):"";
+}
+function parseAmount(value){return Number(digitsOnly(value))||0;}
 const sum=a=>a.reduce((t,x)=>t+(Number(x.amount)||0),0);
 function save(){persist();}
 function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
@@ -194,13 +200,13 @@ function nav(){
   setProgress();
 }
 function entries(arr,type){
- return arr.length?arr.map((x,i)=>`<div class="entry"><div><strong>${esc(x.description)}</strong><small>${money(x.amount)}</small></div><button type="button" class="danger" onclick="removeItem('${type}',${i})">Eliminar</button></div>`).join(""):`<div class="note">Aún no has agregado registros.</div>`;
+ return arr.length?arr.map((x,i)=>`<div class="entry"><div><strong>${esc(x.description)}</strong><small>${money(x.amount)}</small></div><div style="display:flex;gap:6px;flex-shrink:0"><button type="button" class="secondary" onclick="editItem('${type}',${i})">Editar</button><button type="button" class="danger" onclick="removeItem('${type}',${i})">Eliminar</button></div></div>`).join(""):`<div class="note">Aún no has agregado registros.</div>`;
 }
 function renderIncome(){
  const el=document.getElementById("stepIncome");
  el.innerHTML=`<h2>1. Ingresos</h2><p class="hint">Comienza con tu primer ingreso. Puedes agregar salario, honorarios, negocios, rentas u otras entradas de dinero.</p>
  <div class="field"><label>Descripción del ingreso</label><input id="desc" placeholder="Ej. Salario mensual" autocomplete="off"></div>
- <div class="field"><label>Valor mensual</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></div>
+ <div class="field"><label>Valor mensual</label><input id="amt" class="amount" type="text" inputmode="numeric" autocomplete="off" oninput="formatAmountInput(this)" placeholder="0"></div>
  <div class="actions"><button type="button" class="primary" onclick="add('income')">Agregar ingreso</button></div>
  <div style="margin-top:18px"><span class="tag">${data.income.length} ingreso(s)</span></div>${entries(data.income,"income")}
  ${data.income.length?`<div class="actions"><button type="button" class="secondary" onclick="phase='expense';render();">No agregar más ingresos → Gastos</button></div>`:""}`;
@@ -209,7 +215,7 @@ function renderExpense(){
  const el=document.getElementById("stepExpense");
  el.innerHTML=`<h2>2. Gastos</h2><p class="hint">Ahora registra cada gasto por separado, tal como en el Excel: servicios, colegios, mercado, gasolina, salidas, etc.</p>
  <div class="field"><label>Descripción del gasto</label><input id="desc" placeholder="Ej. Internet" autocomplete="off"></div>
- <div class="field"><label>Valor mensual</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></div>
+ <div class="field"><label>Valor mensual</label><input id="amt" class="amount" type="text" inputmode="numeric" autocomplete="off" oninput="formatAmountInput(this)" placeholder="0"></div>
  <div class="actions"><button type="button" class="primary" onclick="add('expenses')">Agregar gasto</button></div>
  <div style="margin-top:18px"><span class="tag">${data.expenses.length} gasto(s) · Total ${money(sum(data.expenses))}</span></div>${entries(data.expenses,"expenses")}
  ${data.expenses.length?`<div class="actions"><button type="button" class="secondary" onclick="phase='debt';render();">No agregar más gastos → Deudas</button></div>`:""}`;
@@ -218,7 +224,7 @@ function renderDebt(){
  const el=document.getElementById("stepDebt");
  el.innerHTML=`<h2>3. Deudas</h2><p class="hint">Registra cada deuda con su pago mensual. El dashboard comparará tu deuda real con la sugerencia del 20% de tus ingresos.</p>
  <div class="field"><label>Descripción de la deuda</label><input id="desc" placeholder="Ej. Crédito / tarjeta / préstamo" autocomplete="off"></div>
- <div class="field"><label>Pago mensual</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></div>
+ <div class="field"><label>Pago mensual</label><input id="amt" class="amount" type="text" inputmode="numeric" autocomplete="off" oninput="formatAmountInput(this)" placeholder="0"></div>
  <div class="actions"><button type="button" class="primary" onclick="add('debts')">Agregar deuda</button></div>
  <div style="margin-top:18px"><span class="tag">${data.debts.length} deuda(s) · Total ${money(sum(data.debts))}</span></div>${entries(data.debts,"debts")}
  ${data.debts.length?`<div class="actions"><button type="button" class="secondary" onclick="phase='investment';render();">No agregar más deudas → Inversiones</button></div>`:""}`;
@@ -227,7 +233,7 @@ function renderInvestment(){
  const el=document.getElementById("stepInvestment");
  el.innerHTML=`<h2>4. Inversiones</h2><p class="hint">Registra cada inversión que quieras hacer este mes: fondos, acciones, CDT, negocio, ahorro para inversión u otras.</p>
  <div class="field"><label>Descripción de la inversión</label><input id="desc" placeholder="Ej. Inversión mensual" autocomplete="off"></div>
- <div class="field"><label>Valor mensual</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></div>
+ <div class="field"><label>Valor mensual</label><input id="amt" class="amount" type="text" inputmode="numeric" autocomplete="off" oninput="formatAmountInput(this)" placeholder="0"></div>
  <div class="actions"><button type="button" class="primary" onclick="add('investment')">Agregar inversión</button></div>
  <div style="margin-top:18px"><span class="tag">${data.investment.length} inversión(es) · Total ${money(sum(data.investment))}</span></div>${entries(data.investment,"investment")}
  ${data.investment.length?`<div class="actions"><button type="button" class="secondary" onclick="phase='donation';render();">No agregar más inversiones → Diezmo / Donación</button></div>`:""}`;
@@ -236,7 +242,7 @@ function renderDonation(){
  const el=document.getElementById("stepDonation");
  el.innerHTML=`<h2>5. Diezmo / Donación</h2><p class="hint">Registra tus diezmos, ofrendas o donaciones por separado. La referencia del dashboard es el 10% de tus ingresos, pero puedes registrar el valor que realmente destinas.</p>
  <div class="field"><label>Descripción</label><input id="desc" placeholder="Ej. Diezmo / Ofrenda / Donación" autocomplete="off"></div>
- <div class="field"><label>Valor</label><input id="amt" class="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></div>
+ <div class="field"><label>Valor</label><input id="amt" class="amount" type="text" inputmode="numeric" autocomplete="off" oninput="formatAmountInput(this)" placeholder="0"></div>
  <div class="actions"><button type="button" class="primary" onclick="add('donation')">Agregar diezmo / donación</button></div>
  <div style="margin-top:18px"><span class="tag">${data.donation.length} registro(s) · Total ${money(sum(data.donation))}</span></div>${entries(data.donation,"donation")}
  ${data.donation.length?`<div class="actions"><button type="button" class="secondary" onclick="phase='dashboard';render();">No agregar más → Ver Dashboard</button></div>`:""}`;
@@ -246,7 +252,7 @@ function add(type){
  const container=document.getElementById(stepId);
  const fields=container ? container.querySelectorAll("input") : [];
  const d=fields[0] ? fields[0].value.trim() : "";
- const a=fields[1] ? Number(fields[1].value) : 0;
+ const a=fields[1] ? parseAmount(fields[1].value) : 0;
  if(!d || !Number.isFinite(a) || a<=0){
    alert("Completa la descripción y un valor mayor que cero.");
    return;
@@ -257,6 +263,23 @@ function add(type){
 }
 function removeItem(type,i){
  if(confirm("¿Eliminar este registro?")){data[type].splice(i,1);persist();render();}
+}
+function editItem(type,i){
+ const item=data[type] && data[type][i];
+ if(!item) return;
+ const description=prompt("Edita la descripción:",item.description);
+ if(description===null) return;
+ const cleanDescription=description.trim();
+ if(!cleanDescription){alert("La descripción no puede estar vacía.");return;}
+ const currentAmount=new Intl.NumberFormat("es-CO",{maximumFractionDigits:0}).format(Number(item.amount)||0);
+ const amountText=prompt("Edita el valor en pesos (puedes escribirlo con o sin puntos):",currentAmount);
+ if(amountText===null) return;
+ const amount=parseAmount(amountText);
+ if(!Number.isSafeInteger(amount)||amount<=0){alert("Ingresa un valor válido mayor que cero.");return;}
+ item.description=cleanDescription;
+ item.amount=amount;
+ persist();
+ render();
 }
 function renderDashboard(){
  const inc=sum(data.income), exp=sum(data.expenses), debt=sum(data.debts), investReal=sum(data.investment), donationReal=sum(data.donation);
